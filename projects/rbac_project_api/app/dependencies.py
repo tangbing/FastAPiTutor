@@ -8,9 +8,7 @@ from projects.rbac_project_api.app.database import SessionDep
 from projects.rbac_project_api.app.models import User, UserRole
 from projects.rbac_project_api.app.security import decode_access_token
 
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
-
 
 def authentication_error() -> HTTPException:
     return HTTPException(

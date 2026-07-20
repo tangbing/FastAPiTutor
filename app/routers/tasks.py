@@ -11,11 +11,19 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
 @router.post("", response_model=TaskRead, status_code=status.HTTP_201_CREATED)
+# task：TaskCreate 从请求体 JSON 读取并校验数据，例如标题，描述等
+# session：SessionDep 通过依赖注入取得数据库会话
+# -> Task: 函数内部实际返回数据库模型对象，再由 TaskRead 转成对外 JSON
 def create_task(task: TaskCreate, session: SessionDep) -> Task:
+    # 把请求模型 TtaskCreate 转成数据库模型 Task，通常这里的 Task 是 SQLModel 定义的表模型
     db_task = Task.model_validate(task)
+    # 把新任务加入当前数据库会话
     session.add(db_task)
+    # 提交事务，真正写入SQLite
     session.commit()
+    # 从数据库重新取回数据，得到数据库生成的字段，例如 id，默认时间等
     session.refresh(db_task)
+    # 返回刚创建的任务，FastAPI 根据 TaskRead 序列化响应给客户端
     return db_task
 
 

@@ -129,6 +129,30 @@ def add_member(
     return user
 
 
+def delete_member(
+    session: Session,
+    project: Project,
+    user_id: int,
+    current_user: User,
+) -> None:
+    # 权限检查
+    ensure_can_manage(project, current_user)
+
+    membership = session.exec(
+        select(ProjectMember).where(
+            ProjectMember.project_id == project.id,
+            ProjectMember.user_id == user_id,
+        )
+    ).one_or_none()
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project member not found",
+        )
+    session.delete(membership)
+    session.commit()
+
+
 def list_members(session: Session, project_id: int) -> list[User]:
     statement = (
         select(User)

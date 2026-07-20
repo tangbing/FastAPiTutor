@@ -4,16 +4,40 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import select
 
 from projects.rbac_project_api.app.database import SessionDep
-from projects.rbac_project_api.app.dependencies import AdminUserDep, require_roles
-from projects.rbac_project_api.app.models import User, UserCreate, UserRead, UserRole
+from projects.rbac_project_api.app.dependencies import (
+    AdminUserDep,
+    CurrentUserDep,
+    require_roles,
+)
+from projects.rbac_project_api.app.models import (
+    User,
+    UserActiveUpdate,
+    UserCreate,
+    UserRead,
+    UserRole,
+)
 from projects.rbac_project_api.app.security import hash_password
-
+from projects.rbac_project_api.app.services.user_service import update_user_active_status
 
 router = APIRouter(prefix="/users", tags=["users"])
 UserReaderDep = Annotated[
     User,
     Depends(require_roles(UserRole.ADMIN, UserRole.MANAGER)),
 ]
+
+@router.patch("/{user_id}/active", response_model=UserRead)
+def patch_user_active_status(
+        user_id: int,
+        active_update: UserActiveUpdate,
+        session: SessionDep,
+        current_user: CurrentUserDep
+) -> User:
+    return update_user_active_status(
+        session = session,
+        user_id=user_id,
+        is_active=active_update.is_active,
+        current_user=current_user
+    )
 
 
 @router.post("", response_model=UserRead, status_code=status.HTTP_201_CREATED)

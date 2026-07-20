@@ -94,3 +94,14 @@ def list_project_members(
 ) -> list[User]:
     project_service.get_visible_project(session, project_id, current_user)
     return project_service.list_members(session, project_id)
+
+@router.delete("/{project_id}/members/{user_id}")
+def delete_project_member(
+    project_id: int,
+    user_id: int,
+    session: SessionDep,
+    current_user: CurrentUserDep,
+) -> dict[str, str]:
+    project = project_service.get_visible_project(session, project_id, current_user)
+    project_service.delete_member(session, project, user_id, current_user)
+    return {"message": "Member removed successfully"}

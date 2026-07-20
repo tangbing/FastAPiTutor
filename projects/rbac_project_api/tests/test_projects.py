@@ -1,38 +1,6 @@
-import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, SQLModel, create_engine
-from sqlmodel.pool import StaticPool
 
-from projects.rbac_project_api.app.database import get_session
-from projects.rbac_project_api.app.main import app
-
-
-@pytest.fixture
-def client() -> TestClient:
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    SQLModel.metadata.create_all(engine)
-
-    def get_test_session():
-        with Session(engine) as session:
-            yield session
-
-    app.dependency_overrides[get_session] = get_test_session
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
-
-
-def login(client: TestClient, username: str, password: str) -> dict[str, str]:
-    response = client.post(
-        "/auth/token",
-        data={"username": username, "password": password},
-    )
-    assert response.status_code == 200
-    return {"Authorization": f"Bearer {response.json()['access_token']}"}
+from .helpers import login
 
 
 def test_rbac_and_project_membership_flow(client: TestClient) -> None:
